@@ -1,7 +1,10 @@
 -- ============================
 -- TABLE 1: People (personal details)
 -- ============================
-CREATE TABLE people (
+--Create database Bank_Transactions
+
+
+CREATE TABLE Bank_Transactions.dbo.people (
     person_id     INT PRIMARY KEY,
     first_name    VARCHAR(50),
     last_name     VARCHAR(50),
@@ -11,7 +14,7 @@ CREATE TABLE people (
     date_of_birth DATE
 );
 
-INSERT INTO people (person_id, first_name, last_name, email, phone, city, date_of_birth) VALUES
+INSERT INTO Bank_Transactions.dbo.people (person_id, first_name, last_name, email, phone, city, date_of_birth) VALUES
 (1,  'John',    'Smith',    'john.smith@email.com',    '0821234567', 'Cape Town',   '1985-03-12'),
 (2,  'Sarah',   'Jones',    'sarah.jones@email.com',   '0827654321', 'Johannesburg','1990-07-22'),
 (3,  'Michael', 'Brown',    'michael.brown@email.com', '0731122334', 'Durban',      '1978-11-05'),
@@ -26,7 +29,7 @@ INSERT INTO people (person_id, first_name, last_name, email, phone, city, date_o
 -- ============================
 -- TABLE 2: Transactions (bank statements)
 -- ============================
-CREATE TABLE transactions (
+CREATE TABLE Bank_Transactions.dbo.transactions (
     transaction_id   INT PRIMARY KEY,
     person_id        INT,
     transaction_date DATE,
@@ -35,7 +38,7 @@ CREATE TABLE transactions (
     transaction_type VARCHAR(20)   -- e.g. 'Deposit', 'Withdrawal', 'Payment'
 );
 
-INSERT INTO transactions (transaction_id, person_id, transaction_date, description, amount, transaction_type) VALUES
+INSERT INTO Bank_Transactions.dbo.transactions (transaction_id, person_id, transaction_date, description, amount, transaction_type) VALUES
 (1,  1, '2025-01-05', 'Salary Deposit',        15000.00, 'Deposit'),
 (2,  1, '2025-01-07', 'Grocery Store',          -650.25, 'Withdrawal'),
 (3,  2, '2025-01-06', 'Salary Deposit',        18500.00, 'Deposit'),
