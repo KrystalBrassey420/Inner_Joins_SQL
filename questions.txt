@@ -1,0 +1,5 @@
+INNER JOIN basics
+
+1.List each transaction along with the person's first name and last name.
+2.Show all deposits (transaction_type = 'Deposit') with the person's full name and city.
+3.Get the full name and email of everyone who made a payment over 1000.
