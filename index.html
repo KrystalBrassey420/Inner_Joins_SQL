@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JOIN. — learn SQL joins on real records</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --ink:#0D1013;
+  --panel:#161A20;
+  --panel-2:#1D222A;
+  --paper:#E9E6DA;
+  --paper-dim:#B7B4A8;
+  --amber:#E8A33D;
+  --teal:#4FB8A6;
+  --rose:#D9705C;
+  --line:#2A3038;
+  --text:#C9CDD6;
+  --text-dim:#767E8C;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+.mono{font-family:'JetBrains Mono',monospace;}
+
+::selection{background:var(--amber); color:var(--ink);}
+
+/* ===== NAV ===== */
+nav{
+  position:sticky; top:0; z-index:50;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 40px;
+  background:rgba(13,16,19,0.88);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+nav .logo{font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--paper); letter-spacing:0.5px;}
+nav .logo span{color:var(--amber);}
+nav ul{list-style:none; display:flex; gap:28px;}
+nav a{color:var(--text-dim); text-decoration:none; font-size:14px; font-family:'JetBrains Mono',monospace; transition:color .2s;}
+nav a:hover{color:var(--paper);}
+
+/* ===== HERO ===== */
+.hero{
+  padding:120px 40px 90px;
+  max-width:980px;
+  margin:0 auto;
+  position:relative;
+}
+.hero .eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--teal);
+  font-size:13px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:22px;
+  display:flex; align-items:center; gap:10px;
+}
+.hero .eyebrow::before{content:''; width:24px; height:1px; background:var(--teal);}
+.hero h1{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:800;
+  font-size:clamp(38px,6vw,72px);
+  line-height:1.05;
+  color:var(--paper);
+  letter-spacing:-1px;
+}
+.hero h1 .dim{color:var(--text-dim); font-weight:500;}
+.hero h1 .cursor{
+  display:inline-block; width:0.5em; height:0.85em; background:var(--amber);
+  animation:blink 1s step-end infinite; vertical-align:-0.08em;
+}
+@keyframes blink{50%{opacity:0;}}
+.hero p.sub{
+  margin-top:26px;
+  max-width:600px;
+  font-size:17px;
+  color:var(--text-dim);
+}
+.hero .query-line{
+  margin-top:44px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:16px 20px;
+  color:var(--paper-dim);
+  overflow-x:auto;
+}
+.hero .query-line .kw{color:var(--amber); font-weight:600;}
+.hero .query-line .tbl{color:var(--teal);}
+
+/* ===== SECTION shell ===== */
+section{
+  padding:80px 40px;
+  max-width:1080px;
+  margin:0 auto;
+  border-top:1px solid var(--line);
+}
+.section-head{margin-bottom:44px;}
+.section-head .tag{
+  font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--amber);
+  text-transform:uppercase; letter-spacing:2px; margin-bottom:10px; display:block;
+}
+.section-head h2{
+  font-family:'JetBrains Mono',monospace; font-size:32px; color:var(--paper); font-weight:700;
+}
+.section-head p{color:var(--text-dim); margin-top:10px; max-width:560px; font-size:15px;}
+
+/* ===== DATA TABLES ===== */
+.tables-wrap{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+}
+@media(max-width:820px){.tables-wrap{grid-template-columns:1fr;}}
+
+.data-card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+.data-card .card-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  color:var(--paper);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.data-card .card-title .count{color:var(--text-dim); font-size:12px;}
+table{width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12.5px;}
+thead th{
+  text-align:left; padding:10px 14px; color:var(--text-dim);
+  font-weight:500; border-bottom:1px solid var(--line); text-transform:uppercase; font-size:10.5px; letter-spacing:0.5px;
+}
+tbody td{padding:9px 14px; border-bottom:1px solid rgba(255,255,255,0.03); color:var(--text);}
+tbody tr{transition:background .15s;}
+tbody tr:hover{background:var(--panel-2);}
+.id-cell{color:var(--amber); font-weight:600;}
+.fk-cell{font-weight:600;}
+tbody tr.hl-match{background:rgba(232,163,61,0.14) !important;}
+tbody tr.hl-orphan{background:rgba(217,112,92,0.1) !important;}
+
+/* ===== JOIN SIMULATOR ===== */
+.tabs{display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap;}
+.tab-btn{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  padding:10px 18px;
+  border-radius:7px;
+  font-size:13px;
+  cursor:pointer;
+  transition:all .15s;
+}
+.tab-btn:hover{color:var(--paper); border-color:var(--paper-dim);}
+.tab-btn.active{background:var(--amber); color:var(--ink); border-color:var(--amber); font-weight:700;}
+
+.sql-box{
+  font-family:'JetBrains Mono',monospace;
+  background:#0A0C0F;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:20px 22px;
+  font-size:13.5px;
+  margin-bottom:26px;
+  color:var(--paper-dim);
+  white-space:pre;
+  overflow-x:auto;
+}
+.sql-box .kw{color:var(--amber); font-weight:600;}
+.sql-box .tbl{color:var(--teal);}
+.sql-box .cm{color:var(--text-dim); font-style:italic;}
+
+.result-card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+.result-card .card-title{
+  font-family:'JetBrains Mono',monospace; font-size:13px; padding:14px 18px;
+  border-bottom:1px solid var(--line); color:var(--paper); display:flex; justify-content:space-between;
+}
+.result-card table td.null-val{color:var(--text-dim); font-style:italic;}
+tr.row-left-only td{background:rgba(79,184,166,0.08);}
+tr.row-right-only td{background:rgba(217,112,92,0.1);}
+
+.legend{display:flex; gap:20px; margin-top:16px; flex-wrap:wrap;}
+.legend .sw{display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-dim);}
+.legend .sw i{width:12px; height:12px; border-radius:3px; display:inline-block;}
+.legend .sw.matched i{background:var(--panel-2); border:1px solid var(--line);}
+.legend .sw.left i{background:rgba(79,184,166,0.35);}
+.legend .sw.right i{background:rgba(217,112,92,0.35);}
+
+/* ===== PRACTICE QUESTIONS ===== */
+.q-group{margin-bottom:30px;}
+.q-group h3{
+  font-family:'JetBrains Mono',monospace; color:var(--teal); font-size:14px;
+  text-transform:uppercase; letter-spacing:1px; margin-bottom:14px;
+}
+.q-item{
+  border:1px solid var(--line);
+  border-radius:8px;
+  margin-bottom:10px;
+  overflow:hidden;
+  background:var(--panel);
+}
+.q-item button{
+  width:100%; text-align:left; background:none; border:none; color:var(--paper);
+  padding:16px 20px; font-size:14.5px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  font-family:'Inter',sans-serif;
+}
+.q-item button .num{color:var(--amber); font-family:'JetBrains Mono',monospace; margin-right:10px; font-size:13px;}
+.q-item button .arrow{color:var(--text-dim); font-family:'JetBrains Mono',monospace; transition:transform .2s;}
+.q-item.open button .arrow{transform:rotate(90deg); color:var(--amber);}
+.q-item .hint{
+  max-height:0; overflow:hidden; transition:max-height .25s ease, padding .25s ease;
+  padding:0 20px; color:var(--text-dim); font-size:13.5px; font-family:'JetBrains Mono',monospace;
+}
+.q-item.open .hint{max-height:120px; padding:0 20px 18px;}
+
+footer{
+  padding:50px 40px 70px;
+  text-align:center;
+  color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  border-top:1px solid var(--line);
+}
+footer .dot{color:var(--amber);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">people<span>⋈</span>transactions</div>
+  <ul>
+    <li><a href="#data">the data</a></li>
+    <li><a href="#simulator">try a join</a></li>
+    <li><a href="#practice">practice</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="eyebrow">a mini course on relational joins</div>
+  <h1>Two tables.<br><span class="dim">One relationship.</span><br>JOIN<span class="cursor"></span></h1>
+  <p class="sub">Everything below runs on the exact same two tables you already built — <b style="color:var(--paper)">people</b> and <b style="color:var(--paper)">transactions</b>. Hover the rows, flip the join type, and watch what a JOIN actually keeps and drops.</p>
+  <div class="query-line"><span class="kw">SELECT</span> p.first_name, t.amount
+<span class="kw">FROM</span> <span class="tbl">people</span> p
+<span class="kw">JOIN</span> <span class="tbl">transactions</span> t <span class="kw">ON</span> p.person_id = t.person_id;</div>
+</div>
+
+<section id="data">
+  <div class="section-head">
+    <span class="tag">01 — the source data</span>
+    <h2>Two small, honest tables</h2>
+    <p>person_id is the thread that connects them. Notice: Lisa (id 6) has no transactions, and two transactions (ids 108, 109) belong to person_ids that don't exist in <b>people</b> at all. That's on purpose — hover a row to see the link.</p>
+  </div>
+  <div class="tables-wrap">
+    <div class="data-card">
+      <div class="card-title">people <span class="count">6 rows</span></div>
+      <table id="peopleTable">
+        <thead><tr><th>id</th><th>first_name</th><th>last_name</th><th>city</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="data-card">
+      <div class="card-title">transactions <span class="count">9 rows</span></div>
+      <table id="txTable">
+        <thead><tr><th>id</th><th>person_id</th><th>description</th><th>amount</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="simulator">
+  <div class="section-head">
+    <span class="tag">02 — the simulator</span>
+    <h2>Pick a join, watch the result</h2>
+    <p>Same two tables every time. Only the join type changes which rows survive.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-join="INNER">INNER JOIN</button>
+    <button class="tab-btn" data-join="LEFT">LEFT JOIN</button>
+    <button class="tab-btn" data-join="RIGHT">RIGHT JOIN</button>
+    <button class="tab-btn" data-join="FULL">FULL OUTER JOIN</button>
+  </div>
+
+  <div class="sql-box" id="sqlBox"></div>
+
+  <div class="result-card">
+    <div class="card-title"><span id="resultTitle">result</span><span id="resultCount" class="mono" style="color:var(--text-dim); font-size:12px;"></span></div>
+    <table>
+      <thead><tr><th>first_name</th><th>city</th><th>tx_id</th><th>description</th><th>amount</th></tr></thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <div class="sw matched"><i></i> matched on both sides</div>
+    <div class="sw left"><i></i> person with no transaction (LEFT-only)</div>
+    <div class="sw right"><i></i> transaction with no person (RIGHT-only)</div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="section-head">
+    <span class="tag">03 — practice</span>
+    <h2>Now write these yourself</h2>
+    <p>Click a question to reveal which join type it needs. Write the query before you peek at the hint.</p>
+  </div>
+
+  <div class="q-group">
+    <h3>INNER JOIN</h3>
+    <div class="q-list" data-group="inner"></div>
+  </div>
+  <div class="q-group">
+    <h3>LEFT JOIN</h3>
+    <div class="q-list" data-group="left"></div>
+  </div>
+  <div class="q-group">
+    <h3>RIGHT JOIN</h3>
+    <div class="q-list" data-group="right"></div>
+  </div>
+  <div class="q-group">
+    <h3>Aggregation + JOIN</h3>
+    <div class="q-list" data-group="agg"></div>
+  </div>
+</section>
+
+<footer>
+  built on <span class="dot">people</span> ⋈ <span class="dot">transactions</span> — practice the joins, then check them against your own SQL engine
+</footer>
+
+<script>
+const people = [
+  {id:1, first:'John',  last:'Smith',   city:'Cape Town'},
+  {id:2, first:'Sarah', last:'Jones',   city:'Johannesburg'},
+  {id:3, first:'Michael', last:'Brown', city:'Durban'},
+  {id:4, first:'Emily', last:'Davis',   city:'Pretoria'},
+  {id:5, first:'David', last:'Wilson',  city:'Cape Town'},
+  {id:6, first:'Lisa',  last:'Miller',  city:'Bloemfontein'},
+];
+
+const transactions = [
+  {id:101, person_id:1, desc:'Salary Deposit',  amount:15000.00},
+  {id:102, person_id:1, desc:'Grocery Store',    amount:-650.25},
+  {id:103, person_id:2, desc:'Salary Deposit',  amount:18500.00},
+  {id:104, person_id:3, desc:'Freelance Payment',amount:7200.00},
+  {id:105, person_id:4, desc:'Salary Deposit',  amount:12300.00},
+  {id:106, person_id:5, desc:'Salary Deposit',  amount:20000.00},
+  {id:107, person_id:5, desc:'Car Payment',     amount:-3500.00},
+  {id:108, person_id:11,desc:'Unknown Deposit', amount:2000.00},
+  {id:109, person_id:12,desc:'Unknown Payment', amount:-1500.00},
+];
+
+function fmt(n){ return (n>=0?'+':'') + n.toFixed(2); }
+
+// render people table
+const pBody = document.querySelector('#peopleTable tbody');
+people.forEach(p=>{
+  const tr = document.createElement('tr');
+  tr.dataset.pid = p.id;
+  tr.innerHTML = `<td class="id-cell">${p.id}</td><td>${p.first}</td><td>${p.last}</td><td>${p.city}</td>`;
+  pBody.appendChild(tr);
+});
+
+// render transactions table
+const tBody = document.querySelector('#txTable tbody');
+transactions.forEach(t=>{
+  const tr = document.createElement('tr');
+  tr.dataset.pid = t.person_id;
+  tr.innerHTML = `<td class="id-cell">${t.id}</td><td class="fk-cell">${t.person_id}</td><td>${t.desc}</td><td>${fmt(t.amount)}</td>`;
+  tBody.appendChild(tr);
+});
+
+// hover linking between the two source tables
+function wireHover(rows, otherRows){
+  rows.forEach(row=>{
+    row.addEventListener('mouseenter', ()=>{
+      const pid = row.dataset.pid;
+      const known = people.some(p=>String(p.id)===String(pid));
+      otherRows.forEach(o=>{
+        if(o.dataset.pid === pid){
+          o.classList.add(known ? 'hl-match' : 'hl-orphan');
+        }
+      });
+      if(!known) row.classList.add('hl-orphan'); else row.classList.add('hl-match');
+    });
+    row.addEventListener('mouseleave', ()=>{
+      rows.forEach(r=>r.classList.remove('hl-match','hl-orphan'));
+      otherRows.forEach(r=>r.classList.remove('hl-match','hl-orphan'));
+    });
+  });
+}
+wireHover([...pBody.children], [...tBody.children]);
+wireHover([...tBody.children], [...pBody.children]);
+
+// ===== JOIN SIMULATOR =====
+const sqlTemplates = {
+  INNER: `<span class="kw">SELECT</span> p.first_name, p.city, t.id <span class="kw">AS</span> tx_id, t.desc, t.amount
+<span class="kw">FROM</span> <span class="tbl">people</span> p
+<span class="kw">INNER JOIN</span> <span class="tbl">transactions</span> t <span class="kw">ON</span> p.person_id = t.person_id;
+<span class="cm">-- only rows that match on BOTH sides survive</span>`,
+  LEFT: `<span class="kw">SELECT</span> p.first_name, p.city, t.id <span class="kw">AS</span> tx_id, t.desc, t.amount
+<span class="kw">FROM</span> <span class="tbl">people</span> p
+<span class="kw">LEFT JOIN</span> <span class="tbl">transactions</span> t <span class="kw">ON</span> p.person_id = t.person_id;
+<span class="cm">-- every person is kept, even with zero transactions (NULLs fill in)</span>`,
+  RIGHT: `<span class="kw">SELECT</span> p.first_name, p.city, t.id <span class="kw">AS</span> tx_id, t.desc, t.amount
+<span class="kw">FROM</span> <span class="tbl">people</span> p
+<span class="kw">RIGHT JOIN</span> <span class="tbl">transactions</span> t <span class="kw">ON</span> p.person_id = t.person_id;
+<span class="cm">-- every transaction is kept, even orphaned ones with no matching person</span>`,
+  FULL: `<span class="kw">SELECT</span> p.first_name, p.city, t.id <span class="kw">AS</span> tx_id, t.desc, t.amount
+<span class="kw">FROM</span> <span class="tbl">people</span> p
+<span class="kw">FULL OUTER JOIN</span> <span class="tbl">transactions</span> t <span class="kw">ON</span> p.person_id = t.person_id;
+<span class="cm">-- nothing is dropped from either side</span>`,
+};
+
+function computeJoin(type){
+  const rows = [];
+  const matchedTxIds = new Set();
+
+  people.forEach(p=>{
+    const matches = transactions.filter(t=>t.person_id===p.id);
+    if(matches.length){
+      matches.forEach(t=>{
+        matchedTxIds.add(t.id);
+        rows.push({p, t, kind:'match'});
+      });
+    } else if(type==='LEFT' || type==='FULL'){
+      rows.push({p, t:null, kind:'left-only'});
+    }
+  });
+
+  if(type==='RIGHT' || type==='FULL'){
+    transactions.forEach(t=>{
+      if(!matchedTxIds.has(t.id) && !people.some(p=>p.id===t.person_id)){
+        rows.push({p:null, t, kind:'right-only'});
+      }
+    });
+  }
+  return rows;
+}
+
+function renderResult(type){
+  document.getElementById('sqlBox').innerHTML = sqlTemplates[type];
+  const rows = computeJoin(type);
+  const body = document.getElementById('resultBody');
+  body.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    if(r.kind==='left-only') tr.classList.add('row-left-only');
+    if(r.kind==='right-only') tr.classList.add('row-right-only');
+    const first = r.p ? r.p.first : '<span class="null-val">NULL</span>';
+    const city  = r.p ? r.p.city  : '<span class="null-val">NULL</span>';
+    const txid  = r.t ? r.t.id    : '<span class="null-val">NULL</span>';
+    const desc  = r.t ? r.t.desc  : '<span class="null-val">NULL</span>';
+    const amt   = r.t ? fmt(r.t.amount) : '<span class="null-val">NULL</span>';
+    tr.innerHTML = `<td>${first}</td><td>${city}</td><td>${txid}</td><td>${desc}</td><td>${amt}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById('resultTitle').textContent = `${type} JOIN result`;
+  document.getElementById('resultCount').textContent = `${rows.length} rows`;
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderResult(btn.dataset.join);
+  });
+});
+renderResult('INNER');
+
+// ===== PRACTICE QUESTIONS =====
+const questions = {
+  inner: [
+    ['List each transaction with the person\\'s full name and city.', 'INNER JOIN people p ON t.person_id = p.person_id'],
+    ['Show only deposits, with the person\\'s full name.', 'INNER JOIN + WHERE transaction_type = \\'Deposit\\''],
+    ['Find full names of everyone who made a payment over 1000.', 'INNER JOIN + WHERE amount > 1000 AND type = \\'Payment\\''],
+  ],
+  left: [
+    ['List all people and their transactions, including people with none.', 'LEFT JOIN transactions t ON p.person_id = t.person_id'],
+    ['Find people who have never made a transaction.', 'LEFT JOIN + WHERE t.id IS NULL'],
+  ],
+  right: [
+    ['List all transactions and their person, including transactions with no matching person.', 'RIGHT JOIN people p ON t.person_id = p.person_id'],
+    ['Find transactions that have no matching person at all (orphans).', 'RIGHT JOIN + WHERE p.person_id IS NULL'],
+  ],
+  agg: [
+    ['Show each person\\'s full name with their total transaction amount.', 'JOIN + GROUP BY + SUM(amount)'],
+    ['Find the person with the highest total deposits.', 'JOIN + WHERE type=\\'Deposit\\' + GROUP BY + ORDER BY SUM DESC LIMIT 1'],
+    ['Count transactions per person, including people with zero (must show 0, not disappear).', 'LEFT JOIN + GROUP BY + COUNT(t.id) -- not COUNT(*)'],
+  ],
+};
+
+Object.entries(questions).forEach(([group, list])=>{
+  const container = document.querySelector(`.q-list[data-group="${group}"]`);
+  list.forEach((q, i)=>{
+    const item = document.createElement('div');
+    item.className = 'q-item';
+    item.innerHTML = `<button><span><span class="num">Q${i+1}</span>${q[0]}</span><span class="arrow">→</span></button>
+      <div class="hint">hint: ${q[1]}</div>`;
+    item.querySelector('button').addEventListener('click', ()=>{
+      item.classList.toggle('open');
+    });
+    container.appendChild(item);
+  });
+});
+</script>
+
+</body>
+</html>
